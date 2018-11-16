@@ -2,7 +2,7 @@ import os
 import time
 import re
 from slackclient import SlackClient
-
+import requests
 
 # instantiate Slack client
 slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
@@ -11,7 +11,7 @@ starterbot_id = None
 
 # constants
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
-EXAMPLE_COMMAND = "do"
+EXAMPLE_COMMAND = "pika"
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
 def parse_bot_commands(slack_events):
@@ -40,21 +40,41 @@ def handle_command(command, channel):
     """
         Executes bot command if the command is known
     """
-    # Default response is help text for the user
-    default_response = "Not sure what you mean. Try *{}*.".format(EXAMPLE_COMMAND)
-
     # Finds and executes the given command, filling in response
     response = None
-    # This is where you start to implement more commands!
-    if command.startswith(EXAMPLE_COMMAND):
-        response = "Sure...write some more code then I can do that!"
+
+    image_definitions = get_image_definitions()
+    if image_definitions[command]:
+        response = image_definitions[command]
+    
+    if response is None:
+        response = "That's not a valid image dummy..."
+
+    attachments = [
+        {
+            "title": command,
+            "image_url": response
+        }
+    ]
 
     # Sends the response back to the channel
     slack_client.api_call(
         "chat.postMessage",
         channel=channel,
-        text=response or default_response
+        text=command,
+        attachments=attachments
     )
+
+def get_image_definitions():
+    image_definitions = {}
+    r = requests.get('https://raw.githubusercontent.com/jbccollins/images/master/images.text', auth=('EMAIL', 'GITHUB_PASSWORD'))
+    for line in r.iter_lines():
+        if line:
+            split = line.split()
+            image_definitions[split[0]] = split[1]
+    return image_definitions
+            
+
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
