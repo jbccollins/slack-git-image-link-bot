@@ -5,7 +5,8 @@ from slackclient import SlackClient
 import requests
 
 # instantiate Slack client
-slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
+# Get this BOT_USER_OAUTH_ACCESS_TOKEN shit here: https://api.slack.com/apps
+slack_client = SlackClient(os.environ.get('BOT_USER_OAUTH_ACCESS_TOKEN'))
 # starterbot's user ID in Slack: value is assigned after the bot starts up
 starterbot_id = None
 
@@ -67,7 +68,7 @@ def handle_command(command, channel):
 
 def get_image_definitions():
     image_definitions = {}
-    r = requests.get('https://raw.githubusercontent.com/jbccollins/images/master/images.text', auth=('EMAIL', 'GITHUB_PASSWORD'))
+    r = requests.get('https://raw.githubusercontent.com/jbccollins/images/master/images.text')
     for line in r.iter_lines():
         if line:
             split = line.split()
